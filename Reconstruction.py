@@ -10,6 +10,8 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import cameraOrientation
+import open3d as o3d
+
 KL = np.array([[3.69825407e+03/2, 0.00000000e+00, 2.64396863e+03/2],
        [0.00000000e+00, 3.70548481e+03/2, 1.89670710e+03/2],
        [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
@@ -17,8 +19,8 @@ KR = np.array([[3.63379404e+03/2, 0.00000000e+00, 2.67271355e+03/2],
        [0.00000000e+00, 3.63448202e+03/2, 1.92521006e+03/2],
        [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
 dist_coeff = None
-imgL = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/DSC_0124.JPG")
-imgR = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/DSC_0163.JPG")
+imgL = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/Stereo_Images/DSC_0124.JPG")
+imgR = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/Stereo_Images/DSC_0163.JPG")
 imgR = cv2.resize(imgR, (2464, 1632))
 imgL = cv2.resize(imgL, (2464, 1632))
 grayL = cv2.cvtColor(imgL, cv2.COLOR_BGR2GRAY)
@@ -240,8 +242,8 @@ def main():
        [0.00000000e+00, 3.63448202e+03/2, 1.92521006e+03/2],
        [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
     dist_coeff = None
-    imgL = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/DSC_0124.JPG")
-    imgR = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/DSC_0163.JPG")
+    imgL = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/Stereo_Images/DSC_0124.JPG")
+    imgR = cv2.imread("C:/Users/karnz/OneDrive/Desktop/SAC_Intern/Codefiles/Stereo_Images/DSC_0163.JPG")
     imgR = cv2.resize(imgR, (2464, 1632))
     imgL = cv2.resize(imgL, (2464, 1632))
     grayL = cv2.cvtColor(imgL, cv2.COLOR_BGR2GRAY)
@@ -263,29 +265,30 @@ def main():
     plt.imshow(filtered_disparity)
     #define baseline
     b = 12
-    points, colors = getReprojected3D(filtered_disparity, IL, IR, b, imgL_rectified)
+    imgL_clr_rectified, imgR_clr_rectified = rectification(imgL, imgR, IL, IR, R, t)
+    points, colors = getReprojected3D(filtered_disparity, IL, IR, b, imgL_clr_rectified)
     scale = 9.63
     tcm = t * scale * 2.54
-    cameraOrientation.cameraOrientation(R, tcm)
+    #cameraOrientation.cameraOrientation(R, tcm)
     '''Open3D is required for the following code, it'd convert these points and colors into a ply file which
      can be visualized in meshlab or open3D'''
     
-    #xyzrbg = np.concatenate((points,colors),axis=1)
-    #pcd = o3d.geometry.PointCloud()
-    #pcd.points = o3d.utility.Vector3dVector(xyzrbg[:,:3])
-    #pcd.colors = o3d.utility.Vector3dVector(xyzrbg[:,3:])
-    #ptsf = []
-    #clrs = []
-    #for i in range(points.shape[0]):
-     #   if (xyzrbgfinal[i,0]>0 and xyzrbgfinal[i,2]!=-24831.056640625):
-      #      ptsf.append(xyzrbgfinal[i])
+    xyzrbg = np.concatenate((points,colors),axis=1)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(xyzrbg[:,:3])
+    pcd.colors = o3d.utility.Vector3dVector(xyzrbg[:,3:])
+    ptsf = []
+    clrs = []
+    for i in range(points.shape[0]):
+        if (xyzrbg[i,0]>0 and xyzrbg[i,2]!=-24831.056640625):
+            ptsf.append(xyzrbg[i])
         #clrs.append(color[i])
-    #ptsf = np.array(ptsf)
+    ptsf = np.array(ptsf)
     #ptsf.shape
-    #pcd = o3d.geometry.PointCloud()
-    #pcd.points = o3d.utility.Vector3dVector(ptsf[:,:3])
-    #pcd.colors = o3d.utility.Vector3dVector(ptsf[:,3:])
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(ptsf[:,:3])
+    pcd.colors = o3d.utility.Vector3dVector(ptsf[:,3:])
     #o3d.io.write_point_cloud('C:/Users/mayank/OneDrive/Desktop/SAC_Intern/lunar_kind/data15.ply',pcd)
-    #o3d.visualization.draw_geometries([pcd])
+    o3d.visualization.draw_geometries([pcd])
 if __name__=="__main__":
     main()
