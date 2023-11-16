@@ -1,10 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 27 15:22:54 2022
 
-@author: dp
-"""
 import matplotlib.pyplot as plt
 import numpy as np
 def cameraOrientation(R, t):
